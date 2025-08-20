@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Source License Generator</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 2rem;
+                background-color: #f4f4f9;
+            }
+            h1, h2 {
+                color: #333;
+            }
+            .license-module {
+                margin-bottom: 1rem;
+            }
+            input[type="text"], input[type="date"] {
+                padding: 0.3rem;
+                width: 250px;
+            }
+            .license-output {
+                background-color: #fff;
+                border: 1px solid #ccc;
+                padding: 1rem;
+                margin-top: 1rem;
+                white-space: pre-wrap;
+            }
+            button {
+                padding: 0.5rem 1rem;
+                margin-top: 1rem;
+                margin-right: 0.5rem;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Source License Generator</h1>
+        <p>Select the modules you want for your license:</p>
+
+        <div class="license-module">
+            <input type="checkbox" id="by" checked onchange="generateLicense()">
+            <label for="by">Attribution (BY)</label>
+        </div>
+
+        <div class="license-module">
+            <input type="checkbox" id="cu" onchange="generateLicense()">
+            <label for="cu">Allow Commercial Use (CU)</label>
+        </div>
+
+        <div class="license-module">
+            <input type="checkbox" id="mod" checked onchange="generateLicense()">
+            <label for="mod">Allow Modification (MOD)</label>
+        </div>
+
+        <div class="license-module">
+            <input type="checkbox" id="sa" onchange="generateLicense()">
+            <label for="sa">Share-Alike (for derivatives)</label>
+        </div>
+
+        <div class="license-module">
+            <input type="checkbox" id="dist" checked onchange="generateLicense()">
+            <label for="dist">Allow Distribution (DIST)</label>
+        </div>
+
+        <div class="license-module">
+            <input type="checkbox" id="prv" onchange="generateLicense()">
+            <label for="prv">Private Use Only (PRV)</label>
+        </div>
+
+        <div class="license-module">
+            <input type="checkbox" id="plt" onchange="generateLicense()">
+            <label for="plt">Forbidding Usage In Political Campaigns (PLT)</label>
+        </div>
+
+        <!-- <div class="license-module">
+            <label for="time">Time-Limited Use (optional):</label>
+            <input type="date" id="time" onchange="generateLicense()">
+        </div> -->
+        <!-- 
+        <div class="license-module">
+            <label for="geo">Geographic Restriction (optional, comma-separated countries):</label>
+            <input type="text" id="geo" placeholder="US, CA, UK" oninput="generateLicense()">
+        </div> -->
+
+        <h2>License Name:</h2>
+        <div class="license-output" id="licenseName"></div>
+
+        <h2>Generated Human-Readable License:</h2>
+        <div class="license-output" id="licenseOutput"></div>
+
+        <h2>Generated Machine-Readable JSON:</h2>
+        <div class="license-output" id="jsonOutput"></div>
+
+        <button onclick="copyText('licenseOutput')">Copy Human-Readable</button>
+        <button onclick="copyText('jsonOutput')">Copy JSON</button>
+        <button onclick="downloadText('licenseOutput','license.txt')">Download Text</button>
+        <button onclick="downloadText('jsonOutput','license.json')">Download JSON</button>
+
+        <script>
+            function generateLicense() {
+            const by = document.getElementById('by').checked;
+            const cu = document.getElementById('cu').checked;
+            const mod = document.getElementById('mod').checked;
+            const sa = document.getElementById('sa').checked;
+            const dist = document.getElementById('dist').checked;
+            const prv = document.getElementById('prv').checked;
+            // const time = document.getElementById('time').value;
+            // const geo = document.getElementById('geo').value;
+            const plt = document.getElementById('plt').checked;
+
+            // Dynamic license name
+            let licenseName = "SL License";
+            let tags = [];
+            if(by) tags.push("BY");
+            if(!cu) tags.push("NC"); // Non-Commercial
+            if(mod) {
+                if(sa) tags.push("SA");
+            } else {
+                tags.push("ND"); // No Derivatives
+            }
+            if(prv) tags.push("PRV");
+            if(plt) tags.push("PLT");
+            if(tags.length > 0) licenseName += " - " + tags.join("-");
+            document.getElementById('licenseName').textContent = licenseName;
+
+            // Human-readable
+            let licenseText = `${licenseName}\n\nPermission is hereby granted to any person obtaining a copy of this work (the "Work") to use, copy, distribute, and modify the Work subject to the following conditions:\n\n`;
+            if(by) licenseText += "1. Attribution: Proper credit must be given as specified.\n";
+            if(!cu) licenseText += "2. Commercial Use: The Work may not be used for commercial purposes.\n";
+            if(!mod) licenseText += "3. Modification: Derivatives are not permitted.\n";
+            if(mod && sa) licenseText += "3. Modification + Share-Alike: Any derivatives must be licensed under the same terms.\n";
+            if(!dist) licenseText += "4. Distribution: Redistribution of the Work or derivatives is prohibited.\n";
+            if(prv) licenseText += "5. Private Use: The Work may only be used privately and not publicly shared.\n";
+            if(plt) licenseText += "6. Political Use: The Work may not be used in political campaigns or for political purposes.\n";
+            // if(time) licenseText += `7. Time-Limited Use: This license expires on ${time}.\n`;
+            // if(geo) licenseText += `8. Geographic Restriction: The Work may only be used in the following regions: ${geo}.\n`;
+            licenseText += "\nDISCLAIMER: The Work is provided \"as is\", without warranty of any kind. The licensor is not liable for any damages arising from use of the Work.";
+
+            document.getElementById('licenseOutput').textContent = licenseText;
+
+            // Machine-readable JSON
+            const licenseJSON = {
+                license: licenseName,
+                permissions: {
+                attribution: by,
+                commercialUse: cu,
+                modification: mod,
+                shareAlike: sa,
+                distribution: dist,
+                privateUse: prv
+                },
+                // timeLimit: time || null,
+                // geoRestriction: geo ? geo.split(',').map(s => s.trim()) : []
+            };
+
+            document.getElementById('jsonOutput').textContent = JSON.stringify(licenseJSON, null, 2);
+            }
+
+            // Copy to clipboard
+            function copyText(id) {
+            const text = document.getElementById(id).textContent;
+            navigator.clipboard.writeText(text).then(() => alert("Copied to clipboard!"));
+            }
+
+            // Download as file
+            function downloadText(id, filename) {
+            const text = document.getElementById(id).textContent;
+            const blob = new Blob([text], {type: "text/plain"});
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            }
+
+            // Initialize on load
+            generateLicense();
+        </script>
+    </body>
+</html>
